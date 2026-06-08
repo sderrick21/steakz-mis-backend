@@ -1,0 +1,166 @@
+// User Management
+User {
+id: string (UUID)
+email: string (unique)
+password: string (hashed)
+firstName: string
+lastName: string
+phone: string
+role: UserRole (CUSTOMER, WAITER_CASHIER, CHEF, BRANCH_MANAGER, HQ_MANAGER) branchId?: string (nullable for HQ_MANAGER and CUSTOMER)
+isActive: boolean
+createdAt: DateTime
+updatedAt: DateTime
+}
+// Branch Management
+Branch {
+id: string (UUID) name: string address: string phone: string email: string isActive: boolean createdAt: DateTime updatedAt: DateTime
+}
+// Menu Management
+Category {
+id: string (UUID) name: string description?: string isActive: boolean sortOrder: number
+}
+MenuItem {
+id: string (UUID) name: string description: string price: Decimal categoryId: string isAvailable: boolean
+preparationTimeMinutes: number imageUrl?: string
+createdAt: DateTime updatedAt: DateTime
+}
+// Inventory Management
+InventoryItem {
+id: string (UUID)
+name: string
+unit: string (kg, liters, pieces) currentStock: Decimal minimumStock: Decimal costPerUnit: Decimal
+branchId: string
+updatedAt: DateTime
+}
+MenuItemIngredient {
+id: string (UUID) menuItemId: string inventoryItemId: string quantityRequired: Decimal
+}
+// Order Management
+Order {
+id: string (UUID)
+orderNumber: string (auto-generated)
+customerId?: string (nullable for walk-in orders)
+branchId: string
+waiterCashierId: string
+status: OrderStatus (PENDING, CONFIRMED, PREPARING, READY, SERVED, CANCELLED) orderType: OrderType (DINE_IN, TAKEAWAY)
+tableNumber?: string
+totalAmount: Decimal
+paymentStatus: PaymentStatus (PENDING, PAID, REFUNDED)
+paymentMethod?: PaymentMethod (CASH, CARD, DIGITAL_WALLET)
+notes?: string
+orderedAt: DateTime
+confirmedAt?: DateTime
+preparedAt?: DateTime
+servedAt?: DateTime
+}
+
+OrderItem {
+id: string (UUID)
+orderId: string
+menuItemId: string quantity: number
+unitPrice: Decimal totalPrice: Decimal specialInstructions?: string
+}
+2.1.2 Enums Definition
+
+typescript
+enum UserRole {
+CUSTOMER = "CUSTOMER" WAITER_CASHIER = "WAITER_CASHIER" CHEF = "CHEF"
+BRANCH_MANAGER = "BRANCH_MANAGER" HQ_MANAGER = "HQ_MANAGER"
+}
+enum OrderStatus { PENDING = "PENDING" CONFIRMED = "CONFIRMED" PREPARING = "PREPARING" READY = "READY"
+SERVED = "SERVED"
+CANCELLED = "CANCELLED" }
+enum PaymentStatus { PENDING = "PENDING" PAID = "PAID" REFUNDED = "REFUNDED"
+}
+enum PaymentMethod {
+CASH = "CASH"
+CARD = "CARD"
+DIGITAL_WALLET = "DIGITAL_WALLET"
+}
+enum OrderType { DINE_IN = "DINE_IN" TAKEAWAY = "TAKEAWAY"
+}
+2.2 API Endpoints Structure
+2.2.1 Authentication & User Management
+
+POST /api/auth/login
+POST /api/auth/logout
+POST /api/auth/register (customer registration) GET /api/auth/profile
+PUT /api/auth/profile
+POST /api/auth/forgot-password
+POST /api/auth/reset-password
+GET /api/users (admin only)
+POST /api/users (admin only)
+PUT /api/users/:id (admin only) DELETE /api/users/:id (admin only)
+2.2.2 Branch Management
+GET /api/branches
+GET /api/branches/:id
+POST /api/branches (HQ only)
+PUT /api/branches/:id (HQ only) DELETE /api/branches/:id (HQ only)
+2.2.3 Menu Management
+GET /api/branches/:branchId/menu GET /api/menu/categories
+GET /api/menu/items
+GET /api/menu/items/:id
+POST /api/menu/items (admin only)
+PUT /api/menu/items/:id (admin only) DELETE /api/menu/items/:id (admin only) PUT /api/menu/items/:id/availability
+2.2.4 Order Management
+
+POST /api/orders (create order)
+GET /api/orders (with filtering by branch, status, date) GET /api/orders/:id
+PUT /api/orders/:id/status
+PUT /api/orders/:id/payment-status
+DELETE /api/orders/:id (cancel order)
+GET /api/kitchen/orders (active orders for kitchen) PUT /api/kitchen/orders/:id/status
+2.2.5 Inventory Management
+GET /api/branches/:branchId/inventory
+GET /api/inventory/items/:id
+PUT /api/inventory/items/:id (update stock)
+GET /api/inventory/usage-report
+GET /api/menu-items/:id/ingredients
+POST /api/menu-items/:id/ingredients
+PUT /api/menu-items/:id/ingredients/:ingredientId DELETE /api/menu-items/:id/ingredients/:ingredientId
+2.2.6 Reporting & Analytics
+GET /api/reports/sales (with date range, branch filtering) GET /api/reports/orders-summary
+GET /api/reports/preparation-times
+GET /api/reports/inventory-usage
+GET /api/reports/branch-performance
+GET /api/dashboard/stats (dashboard summary data)
+2.3 API Response Standards 2.3.1 Success Response Format
+
+typescript
+interface ApiResponse<T> { success: true
+data: T
+message?: string pagination?: {
+page: number limit: number total: number totalPages: number
+} }
+2.3.2 Error Response Format
+typescript
+interface ApiError { success: false error: {
+code: string message: string details?: any
+} }
+2.4 Business Logic Requirements 2.4.1 Order Processing Flow
+1. Customer places order → Status: PENDING
+2. Waiter/Cashier confirms order → Status: CONFIRMED 3. Kitchen receives order → Status: PREPARING
+4. Chef marks order ready → Status: READY
+5. Waiter serves order → Status: SERVED
+2.4.2 Inventory Auto-Deduction
+When order status changes to CONFIRMED, automatically deduct ingredients from inventory Calculate usage based on MenuItemIngredient quantities
+Generate low-stock alerts when inventory falls below minimum threshold
+
+2.4.3 Access Control Middleware
+typescript
+// Role-based access control
+const requireRole = (roles: UserRole[]) => {
+return (req: Request, res: Response, next: NextFunction) => {
+// Implementation for role checking
+} }
+// Branch-specific access control
+const requireBranchAccess = (req: Request, res: Response, next: NextFunction) => { // Ensure users can only access their branch data
+}
+2.5 Data Validation Requirements 2.5.1 Input Validation Rules
+All monetary values: Decimal with 2 decimal places, min 0 Phone numbers: UK format validation
+Email: Valid email format
+Order quantities: Positive integers only
+Inventory quantities: Non-negative decimals
+2.5.2 Business Rules Validation
+Orders cannot be modified after status = PREPARING Inventory cannot go negative
+Branch managers can only access their branch data Customers can only view their own orders
