@@ -25,7 +25,7 @@ export const seedAdminUser = async () => {
       {
         username: 'cashier',
         password: 'cashier1',
-        role: UserRole.WAITER_CASHIER,
+        role: UserRole.CASHIER,
       },
       {
         username: 'chef',
