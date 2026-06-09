@@ -11,10 +11,11 @@ import { seedAdminUser } from './utils/seedAdmin';
 dotenv.config();
 
 const app = express();
-const port = 3000; // Change to 3000 for frontend compatibility
+const port = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors()); // Add CORS support
+const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:3001';
+app.use(cors({ origin: allowedOrigin, credentials: true }));
 app.use(express.json());
 
 // Homepage route
