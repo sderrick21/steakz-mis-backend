@@ -32,6 +32,11 @@ export const seedAdminUser = async () => {
         password: 'chef1',
         role: UserRole.CHEF,
       },
+      {
+        username: 'waiter',
+        password: 'waiter1',
+        role: UserRole.WAITER,
+      },
     ];
 
     for (const user of predefinedUsers) {

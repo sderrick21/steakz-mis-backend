@@ -20,6 +20,7 @@ enum UserRole {
   CUSTOMER
   CASHIER
   CHEF
+  WAITER
   BRANCH_MANAGER
   HQ_MANAGER
 }
