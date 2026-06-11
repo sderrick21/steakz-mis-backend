@@ -11,7 +11,8 @@
     "clean": "rimraf dist",
     "lint": "eslint . --ext .ts",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate deploy"
+    "prisma:migrate": "prisma migrate deploy",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",
