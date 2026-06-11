@@ -260,7 +260,7 @@ export const seedBranchesAndMenu = async (): Promise<void> => {
           data: {
             username: 'waiter',
             password: await hashPassword('waiter1'),
-            role: 'WAITER',
+            role: 'WAITER' as any,
             branchId: branch.id,
             isActive: true
           }
