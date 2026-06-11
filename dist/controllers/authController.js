@@ -10,7 +10,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const hash_1 = require("../utils/hash");
 dotenv_1.default.config();
 const signup = async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, role } = req.body;
     if (!username || !password) {
         return res.status(400).json({ message: 'Username and password are required' });
     }
@@ -18,11 +18,13 @@ const signup = async (req, res) => {
     if (existingUser)
         return res.status(400).json({ message: 'Username already taken' });
     const hashedPassword = await (0, hash_1.hashPassword)(password);
+    const validRoles = ['ADMIN', 'MANAGER', 'HQ_MANAGER', 'CHEF', 'CASHIER', 'WAITER', 'CUSTOMER', 'BRANCH_MANAGER'];
+    const assignedRole = role && validRoles.includes(role) ? role : 'CUSTOMER';
     const user = await prisma_1.default.user.create({
         data: {
             username,
             password: hashedPassword,
-            role: 'CUSTOMER',
+            role: assignedRole,
             isActive: true
         },
     });

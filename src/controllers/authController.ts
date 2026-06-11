@@ -7,22 +7,24 @@ import { comparePassword, hashPassword } from '../utils/hash';
 dotenv.config();
 
 export const signup = async (req: Request, res: Response): Promise<any> => {
-  const { username, password } = req.body;
+  const { username, password, role } = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ message: 'Username and password are required' });
   }
 
-  // Check for existing username
   const existingUser = await prisma.user.findUnique({ where: { username } });
   if (existingUser) return res.status(400).json({ message: 'Username already taken' });
 
   const hashedPassword = await hashPassword(password);
+  const validRoles = ['ADMIN','MANAGER','HQ_MANAGER','CHEF','CASHIER','WAITER','CUSTOMER','BRANCH_MANAGER'];
+  const assignedRole = role && validRoles.includes(role) ? role : 'CUSTOMER';
+
   const user = await prisma.user.create({
     data: {
       username,
       password: hashedPassword,
-      role: 'CUSTOMER', // Always assign CUSTOMER role on signup
+      role: assignedRole as any,
       isActive: true
     },
   });
