@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 
 // ── GET all branches ──────────────────────────────────────────────────────────
-export const getBranches = async (req: Request, res: Response): Promise<void> => {
+export const getBranches = async (_req: Request, res: Response): Promise<void> => {
   try {
     const branches = await prisma.branch.findMany({
       where: { isActive: true },
@@ -15,7 +15,7 @@ export const getBranches = async (req: Request, res: Response): Promise<void> =>
 };
 
 // ── GET menu items ────────────────────────────────────────────────────────────
-export const getMenuItems = async (req: Request, res: Response): Promise<void> => {
+export const getMenuItems = async (_req: Request, res: Response): Promise<void> => {
   try {
     const items = await prisma.menuItem.findMany({
       where: { isAvailable: true },
@@ -255,7 +255,7 @@ export const seedBranchesAndMenu = async (): Promise<void> => {
     if (!waiterUser) {
       const branch = await prisma.branch.findFirst();
       if (branch) {
-        const { hashPassword } = await import('./hash');
+        const { hashPassword } = await import('../utils/hash');
         await prisma.user.create({
           data: {
             username: 'waiter',

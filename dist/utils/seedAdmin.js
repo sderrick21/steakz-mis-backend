@@ -10,27 +10,32 @@ const seedAdminUser = async () => {
             {
                 username: 'admin',
                 password: 'admin1',
-                role: client_1.UserRole.ADMIN,
+                role: 'ADMIN',
             },
             {
                 username: 'hqmanager',
                 password: 'hqmanager1',
-                role: client_1.UserRole.HQ_MANAGER,
+                role: 'HQ_MANAGER',
             },
             {
                 username: 'manager',
                 password: 'manager1',
-                role: client_1.UserRole.MANAGER,
+                role: 'MANAGER',
             },
             {
                 username: 'cashier',
                 password: 'cashier1',
-                role: client_1.UserRole.WAITER_CASHIER,
+                role: 'CASHIER',
             },
             {
                 username: 'chef',
                 password: 'chef1',
-                role: client_1.UserRole.CHEF,
+                role: 'CHEF',
+            },
+            {
+                username: 'waiter',
+                password: 'waiter1',
+                role: 'WAITER',
             },
         ];
         for (const user of predefinedUsers) {

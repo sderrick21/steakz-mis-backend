@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import { hashPassword } from './hash';
 
 const prisma = new PrismaClient()
@@ -10,32 +10,32 @@ export const seedAdminUser = async () => {
       {
         username: 'admin',
         password: 'admin1',
-        role: UserRole.ADMIN,
+        role: 'ADMIN' as any,
       },
       {
         username: 'hqmanager',
         password: 'hqmanager1',
-        role: UserRole.HQ_MANAGER,
+        role: 'HQ_MANAGER' as any,
       },
       {
         username: 'manager',
         password: 'manager1',
-        role: UserRole.MANAGER,
+        role: 'MANAGER' as any,
       },
       {
         username: 'cashier',
         password: 'cashier1',
-        role: UserRole.CASHIER,
+        role: 'CASHIER' as any,
       },
       {
         username: 'chef',
         password: 'chef1',
-        role: UserRole.CHEF,
+        role: 'CHEF' as any,
       },
       {
         username: 'waiter',
         password: 'waiter1',
-        role: UserRole.WAITER,
+        role: 'WAITER' as any,
       },
     ];
 
