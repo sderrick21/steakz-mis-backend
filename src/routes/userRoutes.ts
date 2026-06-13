@@ -11,6 +11,14 @@ import { authenticateToken, authorizeRole } from '../middleware/authMiddleware';
 const router = Router();
 
 // Base routes - require authentication
+router.get('/me', authenticateToken, async (req: any, res: any) => {
+  const prisma = (await import('../utils/prisma')).default;
+  const user = await prisma.user.findUnique({ 
+    where: { id: req.user.id }, 
+    select: { id: true, username: true, role: true, branchId: true } 
+  });
+  res.json(user);
+});
 router.get('/', authenticateToken, getAllUsers);                // List users based on role
 router.get('/:id', authenticateToken, getUserById);            // View user details
 
