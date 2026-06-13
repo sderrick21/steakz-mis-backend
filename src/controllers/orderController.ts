@@ -99,12 +99,21 @@ export const getOrders = async (req: Request, res: Response): Promise<void> => {
 
     let where: any = {};
 
-    if (branchId) where.branchId = branchId;
     if (status) where.status = status;
 
-    // Waiters only see their own orders
+    // Role-based branch filtering
     if (role === 'WAITER') {
+      // Waiters only see their own orders
       where.waiterCashierId = userId;
+    } else if (role === 'CHEF' || role === 'MANAGER' || role === 'CASHIER') {
+      // Chef, Manager, Cashier only see orders from their assigned branch
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { branchId: true } });
+      if (user?.branchId) {
+        where.branchId = user.branchId;
+      }
+    } else if (role === 'HQ_MANAGER' || role === 'ADMIN') {
+      // HQ Manager and Admin can filter by branch or see all
+      if (branchId) where.branchId = branchId;
     }
 
     const orders = await prisma.order.findMany({
@@ -202,6 +211,80 @@ export const processPayment = async (req: Request, res: Response): Promise<void>
   } catch (error) {
     console.error('Error processing payment:', error);
     res.status(500).json({ message: 'Error processing payment' });
+  }
+};
+
+
+// ── MANAGER: Get branch sales summary ────────────────────────────────────────
+export const getBranchSales = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { role, id: userId } = req.user;
+    let branchId = req.query.branchId as string;
+
+    // Manager/Chef/Cashier use their own branch
+    if (role === 'MANAGER' || role === 'CHEF' || role === 'CASHIER') {
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { branchId: true } });
+      branchId = user?.branchId || '';
+    }
+
+    if (!branchId) {
+      res.status(400).json({ message: 'Branch not assigned' });
+      return;
+    }
+
+    const orders = await prisma.order.findMany({
+      where: { branchId, paymentStatus: 'PAID' },
+      include: {
+        orderItems: { include: { menuItem: { select: { name: true } } } },
+        waiterCashier: { select: { username: true } }
+      },
+      orderBy: { orderedAt: 'desc' }
+    });
+
+    const totalRevenue = orders.reduce((sum: number, o: any) => sum + Number(o.totalAmount), 0);
+    const totalOrders = orders.length;
+    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    res.json({
+      branchId,
+      totalRevenue: totalRevenue.toFixed(2),
+      totalOrders,
+      avgOrderValue: avgOrderValue.toFixed(2),
+      recentOrders: orders.slice(0, 20)
+    });
+  } catch (error) {
+    console.error('Error fetching sales:', error);
+    res.status(500).json({ message: 'Error fetching sales' });
+  }
+};
+
+// ── MANAGER: Get branch inventory ─────────────────────────────────────────────
+export const getBranchInventory = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { role, id: userId } = req.user;
+    let branchId = req.query.branchId as string;
+
+    if (role === 'MANAGER' || role === 'CHEF' || role === 'CASHIER') {
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { branchId: true } });
+      branchId = user?.branchId || '';
+    }
+
+    if (!branchId) {
+      res.status(400).json({ message: 'Branch not assigned' });
+      return;
+    }
+
+    const inventory = await prisma.inventoryItem.findMany({
+      where: { branchId },
+      orderBy: { name: 'asc' }
+    });
+
+    const lowStock = inventory.filter((i: any) => Number(i.currentStock) <= Number(i.minimumStock));
+
+    res.json({ branchId, inventory, lowStockCount: lowStock.length, lowStockItems: lowStock });
+  } catch (error) {
+    console.error('Error fetching inventory:', error);
+    res.status(500).json({ message: 'Error fetching inventory' });
   }
 };
 

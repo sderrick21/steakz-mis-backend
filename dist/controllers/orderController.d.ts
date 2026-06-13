@@ -5,4 +5,6 @@ export declare const placeOrder: (req: Request, res: Response) => Promise<void>;
 export declare const getOrders: (req: Request, res: Response) => Promise<void>;
 export declare const updateOrderStatus: (req: Request, res: Response) => Promise<void>;
 export declare const processPayment: (req: Request, res: Response) => Promise<void>;
+export declare const getBranchSales: (req: Request, res: Response) => Promise<void>;
+export declare const getBranchInventory: (req: Request, res: Response) => Promise<void>;
 export declare const seedBranchesAndMenu: () => Promise<void>;

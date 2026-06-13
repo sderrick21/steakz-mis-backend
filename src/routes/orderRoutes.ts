@@ -5,7 +5,9 @@ import {
   placeOrder,
   getOrders,
   updateOrderStatus,
-  processPayment
+  processPayment,
+  getBranchSales,
+  getBranchInventory
 } from '../controllers/orderController';
 import { authenticateToken, authorizeRole } from '../middleware/authMiddleware';
 
@@ -20,5 +22,9 @@ router.post('/orders', authenticateToken, authorizeRole(['WAITER', 'CASHIER', 'M
 router.get('/orders', authenticateToken, authorizeRole(['WAITER', 'CASHIER', 'CHEF', 'MANAGER', 'HQ_MANAGER', 'ADMIN']), getOrders);
 router.patch('/orders/:id/status', authenticateToken, authorizeRole(['CHEF', 'MANAGER', 'ADMIN']), updateOrderStatus);
 router.patch('/orders/:id/payment', authenticateToken, authorizeRole(['CASHIER', 'MANAGER', 'ADMIN']), processPayment);
+
+// Sales and inventory for managers
+router.get('/sales', authenticateToken, authorizeRole(['ADMIN', 'HQ_MANAGER', 'MANAGER', 'CASHIER']), getBranchSales);
+router.get('/inventory', authenticateToken, authorizeRole(['ADMIN', 'HQ_MANAGER', 'MANAGER', 'CHEF']), getBranchInventory);
 
 export default router;

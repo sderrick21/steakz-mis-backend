@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.seedBranchesAndMenu = exports.processPayment = exports.updateOrderStatus = exports.getOrders = exports.placeOrder = exports.getMenuItems = exports.getBranches = void 0;
+exports.seedBranchesAndMenu = exports.getBranchInventory = exports.getBranchSales = exports.processPayment = exports.updateOrderStatus = exports.getOrders = exports.placeOrder = exports.getMenuItems = exports.getBranches = void 0;
 const prisma_1 = __importDefault(require("../utils/prisma"));
 const getBranches = async (_req, res) => {
     try {
@@ -125,12 +125,20 @@ const getOrders = async (req, res) => {
         const { role, id: userId } = req.user;
         const { branchId, status } = req.query;
         let where = {};
-        if (branchId)
-            where.branchId = branchId;
         if (status)
             where.status = status;
         if (role === 'WAITER') {
             where.waiterCashierId = userId;
+        }
+        else if (role === 'CHEF' || role === 'MANAGER' || role === 'CASHIER') {
+            const user = await prisma_1.default.user.findUnique({ where: { id: userId }, select: { branchId: true } });
+            if (user?.branchId) {
+                where.branchId = user.branchId;
+            }
+        }
+        else if (role === 'HQ_MANAGER' || role === 'ADMIN') {
+            if (branchId)
+                where.branchId = branchId;
         }
         const orders = await prisma_1.default.order.findMany({
             where,
@@ -224,6 +232,68 @@ const processPayment = async (req, res) => {
     }
 };
 exports.processPayment = processPayment;
+const getBranchSales = async (req, res) => {
+    try {
+        const { role, id: userId } = req.user;
+        let branchId = req.query.branchId;
+        if (role === 'MANAGER' || role === 'CHEF' || role === 'CASHIER') {
+            const user = await prisma_1.default.user.findUnique({ where: { id: userId }, select: { branchId: true } });
+            branchId = user?.branchId || '';
+        }
+        if (!branchId) {
+            res.status(400).json({ message: 'Branch not assigned' });
+            return;
+        }
+        const orders = await prisma_1.default.order.findMany({
+            where: { branchId, paymentStatus: 'PAID' },
+            include: {
+                orderItems: { include: { menuItem: { select: { name: true } } } },
+                waiterCashier: { select: { username: true } }
+            },
+            orderBy: { orderedAt: 'desc' }
+        });
+        const totalRevenue = orders.reduce((sum, o) => sum + Number(o.totalAmount), 0);
+        const totalOrders = orders.length;
+        const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+        res.json({
+            branchId,
+            totalRevenue: totalRevenue.toFixed(2),
+            totalOrders,
+            avgOrderValue: avgOrderValue.toFixed(2),
+            recentOrders: orders.slice(0, 20)
+        });
+    }
+    catch (error) {
+        console.error('Error fetching sales:', error);
+        res.status(500).json({ message: 'Error fetching sales' });
+    }
+};
+exports.getBranchSales = getBranchSales;
+const getBranchInventory = async (req, res) => {
+    try {
+        const { role, id: userId } = req.user;
+        let branchId = req.query.branchId;
+        if (role === 'MANAGER' || role === 'CHEF' || role === 'CASHIER') {
+            const user = await prisma_1.default.user.findUnique({ where: { id: userId }, select: { branchId: true } });
+            branchId = user?.branchId || '';
+        }
+        if (!branchId) {
+            res.status(400).json({ message: 'Branch not assigned' });
+            return;
+        }
+        const inventory = await prisma_1.default.inventoryItem.findMany({
+            where: { branchId },
+            orderBy: { name: 'asc' }
+        });
+        const lowStock = inventory.filter((i) => Number(i.currentStock) <= Number(i.minimumStock));
+        res.json({ branchId, inventory, lowStockCount: lowStock.length, lowStockItems: lowStock });
+    }
+    catch (error) {
+        console.error('Error fetching inventory:', error);
+        res.status(500).json({ message: 'Error fetching inventory' });
+    }
+};
+exports.getBranchInventory = getBranchInventory;
 const seedBranchesAndMenu = async () => {
     try {
         let branchCount = await prisma_1.default.branch.count();
