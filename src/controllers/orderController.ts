@@ -105,8 +105,12 @@ export const getOrders = async (req: Request, res: Response): Promise<void> => {
     if (role === 'WAITER') {
       // Waiters only see their own orders
       where.waiterCashierId = userId;
-    } else if (role === 'CHEF' || role === 'MANAGER' || role === 'CASHIER' || role === 'HQ_MANAGER' || role === 'ADMIN') {
-      // All management/operational roles can filter by branch if specified
+    } else if (role === 'CHEF' || role === 'MANAGER' || role === 'CASHIER') {
+      // Chef, Manager, Cashier only see orders from their assigned branch
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { branchId: true } });
+      if (user?.branchId) where.branchId = user.branchId;
+    } else if (role === 'HQ_MANAGER' || role === 'ADMIN') {
+      // HQ Manager and Admin can filter by branch or see all
       if (branchId) where.branchId = branchId;
     }
 
