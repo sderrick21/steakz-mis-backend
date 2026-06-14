@@ -130,13 +130,7 @@ const getOrders = async (req, res) => {
         if (role === 'WAITER') {
             where.waiterCashierId = userId;
         }
-        else if (role === 'CHEF' || role === 'MANAGER' || role === 'CASHIER') {
-            const user = await prisma_1.default.user.findUnique({ where: { id: userId }, select: { branchId: true } });
-            if (user?.branchId) {
-                where.branchId = user.branchId;
-            }
-        }
-        else if (role === 'HQ_MANAGER' || role === 'ADMIN') {
+        else if (role === 'CHEF' || role === 'MANAGER' || role === 'CASHIER' || role === 'HQ_MANAGER' || role === 'ADMIN') {
             if (branchId)
                 where.branchId = branchId;
         }
