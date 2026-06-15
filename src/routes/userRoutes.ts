@@ -19,8 +19,8 @@ router.get('/me', authenticateToken, async (req: any, res: any) => {
   });
   res.json(user);
 });
-router.get('/', authenticateToken, getAllUsers);                // List users based on role
-router.get('/:id', authenticateToken, getUserById);            // View user details
+router.get('/', authenticateToken, authorizeRole(['ADMIN', 'HQ_MANAGER', 'MANAGER']), getAllUsers);                // List users - Admin and Manager only
+router.get('/:id', authenticateToken, authorizeRole(['ADMIN', 'HQ_MANAGER', 'MANAGER']), getUserById);            // View user details
 
 // Admin routes - require authentication and admin role
 router.use('/admin', authenticateToken, authorizeRole(['ADMIN']));  // Protect all admin routes

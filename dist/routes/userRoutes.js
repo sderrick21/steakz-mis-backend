@@ -45,8 +45,8 @@ router.get('/me', authMiddleware_1.authenticateToken, async (req, res) => {
     });
     res.json(user);
 });
-router.get('/', authMiddleware_1.authenticateToken, userController_1.getAllUsers);
-router.get('/:id', authMiddleware_1.authenticateToken, userController_1.getUserById);
+router.get('/', authMiddleware_1.authenticateToken, (0, authMiddleware_1.authorizeRole)(['ADMIN', 'HQ_MANAGER', 'MANAGER']), userController_1.getAllUsers);
+router.get('/:id', authMiddleware_1.authenticateToken, (0, authMiddleware_1.authorizeRole)(['ADMIN', 'HQ_MANAGER', 'MANAGER']), userController_1.getUserById);
 router.use('/admin', authMiddleware_1.authenticateToken, (0, authMiddleware_1.authorizeRole)(['ADMIN']));
 router.post('/', userController_1.adminCreateUser);
 router.put('/:id', userController_1.adminUpdateUser);
